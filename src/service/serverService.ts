@@ -8,30 +8,26 @@ export const login = async (data: any): Promise<any> => {
 };
 
 export const getDurable = async (
-  res: any,
+  user_id: string,
   pageCurrent: number
 ): Promise<any> => {
-  const user_id = res.user_id;
-  const token = res.token;
   const data: any = {
     user_id: user_id,
     page: pageCurrent,
   };
+  // console.log(data);
   const response = await httpClient.post(`/durable`, data, {
     headers: {
-      // Authorization: "Bearer " + token,
-      // Accept: "application/json",
       "Content-Type": "application/json",
     },
   });
   return response.data;
 };
 
-export const getDurableByid = async (id: any, token: any): Promise<any> => {
+export const getDurableById = async (id: any, token: string): Promise<any> => {
   const response = await httpClient.get(`/durable/byid/${id}`, {
     headers: {
-      // Authorization: "Bearer " + token,
-      // Accept: "application/json",
+      Authorization: "Bearer " + token,
       "Content-Type": "application/json",
     },
   });
@@ -42,7 +38,6 @@ export const getDurableByid = async (id: any, token: any): Promise<any> => {
 export const setCheckDurable = async (result: any): Promise<any> => {
   const id = result.id;
   const check_status = result.check_status;
-  const token = result.token;
   const response = await httpClient.post(
     `/durable/check`,
     {
@@ -51,8 +46,6 @@ export const setCheckDurable = async (result: any): Promise<any> => {
     },
     {
       headers: {
-        // Authorization: "Bearer " + token,
-        // Accept: "application/json",
         "Content-Type": "application/json",
       },
     }
@@ -62,8 +55,7 @@ export const setCheckDurable = async (result: any): Promise<any> => {
 
 export const updateCheckDurable = async (result: any): Promise<any> => {
   const id = result.id;
-  const check_status = result.check_status;
-  const token = result.token;
+  const check_status = result?.check_status;
   const response = await httpClient.post(
     `/durable/updatecheck`,
     {
@@ -72,8 +64,6 @@ export const updateCheckDurable = async (result: any): Promise<any> => {
     },
     {
       headers: {
-        // Authorization: "Bearer " + token,
-        // Accept: "application/json",
         "Content-Type": "application/json",
       },
     }
@@ -81,10 +71,19 @@ export const updateCheckDurable = async (result: any): Promise<any> => {
   return response.data;
 };
 
+export const updateImage = async (result: any): Promise<any> => {
+  console.log(result);
+  const response = await httpClient.post("/durable/uploadimage", result, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const getScannerDurable = async (
   user_id: number,
-  barcode: any,
-  token: any
+  barcode: any
 ): Promise<any> => {
   const data: any = {
     user_id: user_id,
@@ -92,8 +91,6 @@ export const getScannerDurable = async (
   };
   const response = await httpClient.post(`/durable/scanner`, data, {
     headers: {
-      // Authorization: "Bearer " + token,
-      // Accept: "application/json",
       "Content-Type": "application/json",
     },
   });
@@ -101,27 +98,19 @@ export const getScannerDurable = async (
 };
 
 export const getTotalDurableByUserId = async (
-  user_id: number,
-  token: any
+  user_id: number
 ): Promise<any> => {
   const response = await httpClient.get(`/durable/${user_id}`, {
     headers: {
-      // Authorization: "Bearer " + token,
-      // Accept: "application/json",
       "Content-Type": "application/json",
     },
   });
   return response.data;
 };
 
-export const getChartUser = async (
-  user_id: number,
-  token: any
-): Promise<any> => {
+export const getChartUser = async (user_id: number): Promise<any> => {
   const response = await httpClient.get(`/durable/piechart/${user_id}`, {
     headers: {
-      // Authorization: "Bearer " + token,
-      // Accept: "application/json",
       "Content-Type": "application/json",
     },
   });
@@ -130,15 +119,12 @@ export const getChartUser = async (
 
 export const searchDurable = async (
   user_id: number,
-  token: any,
   search: any
 ): Promise<any> => {
   const response = await httpClient.get(
     `/durable/search/${user_id}/${search}`,
     {
       headers: {
-        // Authorization: "Bearer " + token,
-        // Accept: "application/json",
         "Content-Type": "application/json",
       },
     }

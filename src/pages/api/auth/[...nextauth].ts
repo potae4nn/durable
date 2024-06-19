@@ -1,10 +1,10 @@
-import CredentialsProvider from "next-auth/providers/credentials";
-import NextAuth from "next-auth";
 import { login } from "@/service/serverService";
-import type { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 const APP_BASE_PATH = process.env.APP_BASE_PATH;
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
+  // Configure one or more authentication providers
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -22,9 +22,6 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  // pages: {
-  //   signIn: APP_BASE_PATH + "/auth/signin",
-  // },
   callbacks: {
     async signIn({ user, account, profile, email, credentials }: any) {
       const isAllowedToSignIn = true;
@@ -38,7 +35,8 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async redirect({ url, baseUrl }: any) {
-      return `${baseUrl}${APP_BASE_PATH}/home`;
+      // console.log(baseUrl+APP_BASE_PATH)
+      return `${baseUrl}${APP_BASE_PATH}`;
     },
     async jwt({ token, account, user }: any) {
       return { ...token, ...user };
@@ -51,6 +49,4 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export default NextAuth(authOptions);

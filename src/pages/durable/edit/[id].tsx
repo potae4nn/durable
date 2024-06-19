@@ -1,45 +1,35 @@
-"use client";
-import { Daum } from "@/model/durable";
+import { convertStatus, convertStatusColor } from "@/components/ConvertData";
+import Layout from "@/components/Layout";
+import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import {
-  getDurableByid,
+  getDurableById,
   setCheckDurable,
   updateCheckDurable,
+  updateImage,
 } from "@/service/serverService";
+import { getServerSession } from "next-auth";
 import Image from "next/image";
-import React from "react";
-import { useRouter } from "next/navigation";
-import { convertStatus, convertStatusColor } from "@/app/template/ConvertData";
+import { useRouter } from "next/router";
+import { MdPhotoCamera } from "react-icons/md";
+import { AiOutlineCloudUpload } from "react-icons/ai";
+import React, { useState } from "react";
 
 type Props = {
-  id: string;
-  session: any;
+  durable: any;
 };
 
-const Card = ({ id, session }: Props) => {
-  const [item, setItem] = React.useState<Daum[]>([]);
+const Edit = ({ durable }: Props) => {
+  const [loading, setLoading] = useState(false);
+  const [photo, setPhoto] = useState<any>();
+  const [preview, setPreview] = useState<any>();
   const router = useRouter();
-
-  React.useEffect(() => {
-    _fetchData();
-  }, []);
-
-  const _fetchData = async () => {
-    await getDurableByid(id, session?.user?.token)
-      .then((res) => {
-        setItem(res.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
 
   const handleUpdate = async (status: number) => {
     const data = {
-      id: id,
+      id: durable.data[0].id,
       check_status: status,
-      token: session.user.token,
     };
-    if (item[0].check_status !== null) {
+    if (durable.data[0].check_status !== null) {
       const res = await updateCheckDurable(data);
       if (res.status.code === 200) {
         alert("แก้ไขสำเร็จ");
@@ -54,28 +44,49 @@ const Card = ({ id, session }: Props) => {
     }
   };
 
+  const handleSavePhoto = async () => {
+    const res = await updateImage({ photo: photo, id: durable.data[0].id });
+    if (res.status.code === 200) {
+      alert("เพิ่มรูปภาพสำเร็จ");
+    }
+  };
+
   return (
-    <div>
-      {" "}
-      <div className="container mx-auto mt-4 sm:card sm:w-96 bg-base-100 mb-20 lg:card lg:w-full lg:card-side shadow-xl">
-        <figure className="lg:w-2/6 relative">
-          {/* <img
-          src={`http://shc.sut.ac.th/durableapi/image/durables/${item[0]?.image}`}
-          alt="Shoes"
-        /> */}
-
-          <div className="absolute sm:bottom-3 sm:right-3 lg:top-3 lg:-right-3">
-            <button className="btn glass btn-sm text-white">
+    <Layout>
+      <div className="container mx-auto mt-4 sm:w-96 bg-base-100 mb-20 card lg:w-full lg:card-side shadow-xl">
+        <div className="absolute top-4 right-36 lg:top-3 lg:left-3">
+          {!photo ? (
+            <label className="btn btn-sm " htmlFor="fileUpload">
+              <input
+                type="file"
+                onChange={(e: any) => {
+                  setPhoto(e.target.files[0]);
+                  setPreview(URL.createObjectURL(e.target.files[0]));
+                }}
+                className="hidden"
+                id="fileUpload"
+                accept=".jpg, .jpeg, .png"
+              />
+              <MdPhotoCamera size={25} />
               เปลี่ยน/เพิ่ม รูปภาพ
+            </label>
+          ) : (
+            <button onClick={handleSavePhoto} className="btn btn-success">
+              <AiOutlineCloudUpload size={25} />
+              อัพโหลดรูปภาพ
             </button>
-          </div>
-
-          {item[0]?.image ? (
+          )}
+        </div>
+        <figure className="lg:w-2/6 flex justify-center">
+          {preview ? (
+            <Image className="lg:rounded-l-xl rounded-xl" src={preview} alt="preview" width={50} height={50} />
+          ) : durable.data[0]?.image ? (
             <Image
-              src={`https://shc.sut.ac.th/durableapi/image/durables/${item[0]?.image}`}
-              alt={item[0]?.durable_id}
-              width={500}
-              height={500}
+            className="lg:rounded-l-xl rounded-xl"
+              src={`${process.env.NEXT_PUBLIC_BASE_IMAGE_URL_API}/durables/${durable.data[0]?.image}`}
+              alt={durable.data[0]?.durable_id}
+              width={300}
+              height={300}
             />
           ) : (
             <svg
@@ -83,8 +94,8 @@ const Card = ({ id, session }: Props) => {
               id="Layer_1"
               xmlns="http://www.w3.org/2000/svg"
               xmlnsXlink="http://www.w3.org/1999/xlink"
-              width="100%"
-              height="100%"
+              width="80%"
+              height="80%"
               viewBox="0 0 32 32"
               xmlSpace="preserve"
             >
@@ -92,47 +103,47 @@ const Card = ({ id, session }: Props) => {
                 <path
                   fill="#828290"
                   d="M1.5,32h29c0.827,0,1.5-0.673,1.5-1.5v-29C32,0.673,31.327,0,30.5,0h-29C0.673,0,0,0.673,0,1.5v29
-  C0,31.327,0.673,32,1.5,32z M1,1.5C1,1.224,1.225,1,1.5,1h29C30.775,1,31,1.224,31,1.5v29c0,0.276-0.225,0.5-0.5,0.5h-29
-  C1.225,31,1,30.776,1,30.5V1.5z"
+C0,31.327,0.673,32,1.5,32z M1,1.5C1,1.224,1.225,1,1.5,1h29C30.775,1,31,1.224,31,1.5v29c0,0.276-0.225,0.5-0.5,0.5h-29
+C1.225,31,1,30.776,1,30.5V1.5z"
                 />
                 <path
                   fill="#828290"
                   d="M20.5,12.5c1.103,0,2-0.897,2-2s-0.897-2-2-2s-2,0.897-2,2S19.397,12.5,20.5,12.5z M20.5,9.5
-  c0.552,0,1,0.449,1,1s-0.448,1-1,1s-1-0.449-1-1S19.948,9.5,20.5,9.5z"
+c0.552,0,1,0.449,1,1s-0.448,1-1,1s-1-0.449-1-1S19.948,9.5,20.5,9.5z"
                 />
                 <path
                   fill="#828290"
                   d="M4.5,25h23c0.276,0,0.5-0.224,0.5-0.5v-20C28,4.224,27.776,4,27.5,4h-23C4.224,4,4,4.224,4,4.5v20
-  C4,24.776,4.224,25,4.5,25z M5,24v-5.638c0.022-0.016,0.047-0.025,0.067-0.045l5.116-5.116c0.26-0.26,0.712-0.259,0.972,0
-  l7.521,7.521c0.098,0.098,0.226,0.146,0.354,0.146c0.124,0,0.248-0.046,0.345-0.138l3.866-3.672c0.13-0.13,0.303-0.202,0.486-0.202
-  c0.184,0,0.355,0.072,0.471,0.187l2.802,3.052c0,0,0.001,0,0.001,0.001V24H5z M27,5v13.618l-2.081-2.266
-  c-0.317-0.319-0.741-0.495-1.191-0.495c-0.001,0-0.001,0-0.001,0c-0.451,0-0.875,0.176-1.185,0.486l-3.504,3.328l-7.176-7.177
-  c-0.639-0.638-1.749-0.637-2.386,0L5,16.971V5H27z"
+C4,24.776,4.224,25,4.5,25z M5,24v-5.638c0.022-0.016,0.047-0.025,0.067-0.045l5.116-5.116c0.26-0.26,0.712-0.259,0.972,0
+l7.521,7.521c0.098,0.098,0.226,0.146,0.354,0.146c0.124,0,0.248-0.046,0.345-0.138l3.866-3.672c0.13-0.13,0.303-0.202,0.486-0.202
+c0.184,0,0.355,0.072,0.471,0.187l2.802,3.052c0,0,0.001,0,0.001,0.001V24H5z M27,5v13.618l-2.081-2.266
+c-0.317-0.319-0.741-0.495-1.191-0.495c-0.001,0-0.001,0-0.001,0c-0.451,0-0.875,0.176-1.185,0.486l-3.504,3.328l-7.176-7.177
+c-0.639-0.638-1.749-0.637-2.386,0L5,16.971V5H27z"
                 />
               </g>
             </svg>
           )}
         </figure>
-        <div className="card-body">
-          <h2 className="card-title">{item[0]?.name}</h2>
+        <div className="card-body p-4">
+          <h2 className="card-title">{durable.data[0]?.name}</h2>
           <div>
-            รหัสครุภัณฑ์ : {item[0]?.durable_id} <br /> สถานที่เก็บ :{" "}
-            {item[0]?.location} <br />
-            ราคา: {item[0]?.price} บาท <br />
-            ปีงบประมาณ: {item[0]?.fiscal_year}
+            รหัสครุภัณฑ์ : {durable.data[0]?.durable_id} <br /> สถานที่เก็บ :{" "}
+            {durable.data[0]?.location} <br />
+            ราคา: {durable.data[0]?.price} บาท <br />
+            ปีงบประมาณ: {durable.data[0]?.fiscal_year}
             <br />
-            หมายเหตุ : {item[0]?.remark}
+            หมายเหตุ : {durable.data[0]?.remark}
             <br />
             สถานะครุภัณฑ์ :{" "}
-            {item[0]?.check_status == null ? (
+            {durable.data[0]?.check_status == null ? (
               "ยังไม่ได้สำรวจ"
             ) : (
               <p
                 className={`badge badge-outline ${convertStatusColor(
-                  item[0]?.check_status
+                  durable.data[0]?.check_status
                 )}`}
               >
-                {convertStatus(item[0]?.check_status)}
+                {convertStatus(durable.data[0]?.check_status)}
               </p>
             )}
             <br />
@@ -207,8 +218,29 @@ const Card = ({ id, session }: Props) => {
           </div>
         </div>
       </div>
-    </div>
+      {/* )} */}
+    </Layout>
   );
 };
 
-export default Card;
+export const getServerSideProps = async (context: any) => {
+  const { params } = context || {};
+  const id: any = params?.id;
+  const session = await getServerSession(
+    context?.req,
+    context?.res,
+    authOptions
+  );
+  if (id) {
+    const durable = await getDurableById(id, session?.user?.token);
+    return {
+      props: {
+        durable: durable,
+      },
+    };
+  } else {
+    return { props: {} };
+  }
+};
+
+export default Edit;

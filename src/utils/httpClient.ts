@@ -18,17 +18,15 @@ const ApiClient = () => {
   instance.interceptors.request.use(
     async (config) => {
       const session: any = await getSession();
-      if (session) {
+      if (session?.user) {
         config.headers["Authorization"] = `Bearer ${session?.user?.token}`;
       }
       return config;
     },
     (error) => {
-      console.log(`error`, error);
       throw new Error(error.response.data.message);
     }
   );
-
   return instance;
 };
 
